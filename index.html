@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bacting Pharmacy | Executive Portal & Payroll</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter for Clean Corporate Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK CDNs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        corporate: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316', // Professional Orange Primary
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8fafc;
+        }
+        .memo-pad {
+            background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%);
+            border-left: 5px solid #eab308;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transform: rotate(-0.5deg);
+        }
+    </style>
+</head>
+<body class="text-slate-800 font-sans min-h-screen flex flex-col justify-between selection:bg-corporate-100 selection:text-corporate-900">
+
+    <!-- Top Corporate Header with Prominent Action Buttons -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-6 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3 cursor-pointer group" onclick="goToHome()">
+                <div class="bg-corporate-500 text-white p-2 rounded-xl shadow font-bold text-lg flex items-center justify-center w-10 h-10">
+                    <i class="fa-solid fa-pills"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white">Bacting Pharmacy</h1>
+                    <p class="text-[11px] text-slate-400 font-medium">Enterprise Management System ☁️</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <!-- Cash Counter Quick Access Button in Header -->
+                <button onclick="openHeaderCashCounterModal()" class="bg-corporate-600 hover:bg-corporate-700 text-white px-4 py-2.5 rounded-2xl font-bold text-xs md:text-sm shadow-xl transition flex items-center border border-corporate-400 tracking-wide">
+                    <i class="fa-solid fa-cash-register mr-2 text-base"></i> Cash Counter 💵
+                </button>
+
+                <!-- Extra Large, Bigger & Prominent Green O.S Button -->
+                <button onclick="openMainOsModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-2xl font-black text-xs md:text-sm shadow-xl transition flex items-center border-2 border-emerald-400 animate-pulse tracking-wide">
+                    <i class="fa-solid fa-triangle-exclamation mr-2 text-base"></i> Log O.S Item 🚨
+                </button>
+
+                <button onclick="openManagerLoginModal()" class="bg-slate-800 hover:bg-slate-700 text-corporate-400 hover:text-corporate-300 px-3.5 py-2 rounded-xl font-semibold text-xs md:text-sm flex items-center shadow border border-slate-700 transition">
+                    <i class="fa-solid fa-user-shield mr-2"></i> Manager Portal
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dynamic Main Container -->
+    <main class="max-w-7xl mx-auto px-6 py-8 w-full flex-grow" id="main-container">
+        <!-- Initial loading state -->
+        <div class="flex justify-center items-center py-20 text-corporate-500">
+            <i class="fa-solid fa-spinner fa-spin text-3xl"></i>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+        <p>&copy; 2026 Bacting Pharmacy Enterprise. Real-time Firebase Sync Active (bacting-pharmacy-portal).</p>
+    </footer>
+
+    <!-- PIN Authentication Modal -->
+    <div id="pin-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl p-6 w-84 shadow-2xl border border-slate-200 text-center relative animate-fade-in">
+            <button onclick="closePinModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="w-12 h-12 bg-corporate-50 text-corporate-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 id="pin-modal-title" class="text-base font-bold text-slate-900 mb-1">Enter PIN</h3>
+            <p id="pin-modal-subtitle" class="text-xs text-slate-500 mb-4">Enter your 4-digit security code</p>
+            
+            <input type="password" id="pin-input" maxlength="4" oninput="handlePinTyping(event)" class="w-40 text-center tracking-widest text-xl font-bold py-2 border border-slate-300 rounded-xl focus:border-corporate-500 focus:outline-none mb-4 bg-slate-50 text-slate-800" placeholder="••••">
+            
+            <div class="grid grid-cols-3 gap-2 mb-4 px-2">
+                <button onclick="appendPin('1')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">1</button>
+                <button onclick="appendPin('2')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">2</button>
+                <button onclick="appendPin('3')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">3</button>
+                <button onclick="appendPin('4')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">4</button>
+                <button onclick="appendPin('5')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">5</button>
+                <button onclick="appendPin('6')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">6</button>
+                <button onclick="appendPin('7')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">7</button>
+                <button onclick="appendPin('8')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">8</button>
+                <button onclick="appendPin('9')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">9</button>
+                <button onclick="clearPin()" class="bg-red-50 hover:bg-red-100 text-red-600 py-2.5 rounded-lg font-bold text-xs flex items-center justify-center transition">C</button>
+                <button onclick="appendPin('0')" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition">0</button>
+                <button onclick="backspacePin()" class="bg-slate-100 hover:bg-slate-200 py-2.5 rounded-lg font-bold text-slate-700 transition"><i class="fa-solid fa-delete-left"></i></button>
+            </div>
+
+            <button onclick="submitPin()" class="w-full bg-corporate-600 hover:bg-corporate-700 text-white font-semibold py-2.5 rounded-xl shadow transition text-sm">Verify PIN</button>
+        </div>
+    </div>
+
+    <!-- Header Accessible Global Cash Counter Modal -->
+    <div id="header-cash-counter-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl border border-slate-200 relative animate-fade-in max-h-[90vh] overflow-y-auto">
+            <button onclick="closeHeaderCashCounterModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 bg-corporate-50 text-corporate-600 rounded-xl flex items-center justify-center text-lg font-bold">
+                    <i class="fa-solid fa-cash-register"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Closing Cash Counter</h3>
+                    <p class="text-xs text-slate-500">Automatically computes drawer total less ₱3,000 float.</p>
+                </div>
+            </div>
+
+            <!-- Total Display Header -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+                    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold block">Raw Total Count</span>
+                    <span id="modal-raw-total" class="text-base font-bold text-slate-700">₱0.00</span>
+                </div>
+                <div class="bg-corporate-50 p-3 rounded-xl border border-corporate-200 text-center">
+                    <span class="text-[10px] uppercase tracking-wider text-corporate-700 font-semibold block">Net Closing Total (-₱3k)</span>
+                    <span id="modal-net-total" class="text-lg font-bold text-corporate-600">₱0.00</span>
+                </div>
+            </div>
+
+            <form onsubmit="saveGlobalCashCount(event)" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left text-sm">
+                    <div class="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-xs text-slate-500 uppercase">Bills</h4>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱1,000</span><input type="number" min="0" value="0" data-val="1000" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱500</span><input type="number" min="0" value="0" data-val="500" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱200</span><input type="number" min="0" value="0" data-val="200" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱100</span><input type="number" min="0" value="0" data-val="100" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱50</span><input type="number" min="0" value="0" data-val="50" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱20</span><input type="number" min="0" value="0" data-val="20" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                    </div>
+                    <div class="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <h4 class="font-bold text-xs text-slate-500 uppercase">Coins & Details</h4>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱10 Coin</span><input type="number" min="0" value="0" data-val="10" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱5 Coin</span><input type="number" min="0" value="0" data-val="5" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                        <div class="flex justify-between items-center"><span class="text-xs">₱1 Coin</span><input type="number" min="0" value="0" data-val="1" oninput="calculateModalCashTotal()" class="modal-cash-qty w-16 px-2 py-1 border rounded text-center text-xs bg-white"></div>
+                        
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Staff / Logger Name</label>
+                            <input type="text" id="modal-cash-staff" placeholder="e.g. Joh / Shie" class="w-full px-3 py-1.5 border rounded-lg text-xs bg-white" required>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Remarks / Note</label>
+                            <input type="text" id="modal-cash-note" placeholder="e.g. Closing drawer count" class="w-full px-3 py-1.5 border rounded-lg text-xs bg-white">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-corporate-600 hover:bg-corporate-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow transition">
+                    Save Closing Cash Count Record
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Consolidated Single Clock-Out Prompt Modal with Tick Buttons -->
+    <div id="custom-prompt-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl p-6 w-96 shadow-2xl border border-slate-200 text-left relative animate-fade-in">
+            <button onclick="closeClockOutModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 bg-corporate-50 text-corporate-600 rounded-xl flex items-center justify-center text-lg font-bold">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Shift Clock-Out Summary</h3>
+                    <p class="text-xs text-slate-500">Verify your shift details below</p>
+                </div>
+            </div>
+            
+            <form onsubmit="submitClockOutModal(event)" class="space-y-4">
+                <!-- Lunch Taken Section -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Lunch Taken?</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="lunch-yes-btn" onclick="setLunch(true)" class="py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm">
+                            <i class="fa-solid fa-check mr-2"></i> Yes
+                        </button>
+                        <button type="button" id="lunch-no-btn" onclick="setLunch(false)" class="py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-white border-slate-200 text-slate-600 hover:bg-slate-50">
+                            <i class="fa-solid fa-xmark mr-2 text-slate-400"></i> No (+₱50)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OT Taken Section -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">OT / Deduction Taken?</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="ot-yes-btn" onclick="setOt(true)" class="py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-white border-slate-200 text-slate-600 hover:bg-slate-50">
+                            <i class="fa-solid fa-check mr-2 text-slate-400"></i> Yes
+                        </button>
+                        <button type="button" id="ot-no-btn" onclick="setOt(false)" class="py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm">
+                            <i class="fa-solid fa-xmark mr-2"></i> No
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OT Amount Input (Conditionally Shown) -->
+                <div id="ot-amount-wrapper" class="hidden animate-fade-in">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Enter Deduction Amount (₱)</label>
+                    <input type="number" step="0.01" min="0" id="modal-ot-amount" placeholder="0.00" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-corporate-600 hover:bg-corporate-700 text-white font-semibold py-3 rounded-xl text-sm shadow transition flex items-center justify-center">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i> Confirm & Clock Out
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Screen O.S Modal with Updated Urgency Options -->
+    <div id="os-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl p-6 w-96 shadow-2xl border border-slate-200 text-center relative animate-fade-in">
+            <button onclick="closeOsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 mb-4">Report Out-of-Stock Item</h3>
+            <form onsubmit="handleEmployeeOsSubmit(event)" class="space-y-3.5 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Logger Name (Staff)</label>
+                    <input type="text" id="os-logger-name" placeholder="e.g. Joh / Shie" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-slate-50" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Item Name</label>
+                    <input type="text" id="os-item-name" placeholder="e.g. Paracetamol 500mg" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-slate-50" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Stock Urgency</label>
+                    <select id="os-urgency" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-emerald-500 bg-white" required>
+                        <option value="Low Stock">Low Stock</option>
+                        <option value="No Stock">No Stock</option>
+                        <option value="Request New Item">Request New Item</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow transition mt-2">Submit Report</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Edit Log Modal -->
+    <div id="edit-log-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl p-6 w-96 shadow-2xl border border-slate-200 text-center relative animate-fade-in">
+            <button onclick="closeEditLogModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="w-12 h-12 bg-corporate-50 text-corporate-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl font-bold">
+                <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 mb-4">Edit Time Log</h3>
+            <form onsubmit="submitEditLog(event)" class="space-y-3.5 text-left">
+                <input type="hidden" id="edit-log-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Clock In Date & Time</label>
+                    <input type="datetime-local" id="edit-clock-in" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Clock Out Date & Time</label>
+                    <input type="datetime-local" id="edit-clock-out" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50">
+                </div>
+                <button type="submit" class="w-full bg-corporate-600 hover:bg-corporate-700 text-white font-semibold py-2.5 rounded-xl text-sm shadow transition mt-2">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqPfFTyu4rCvAGL4-4__y8iB_XhibtXHY",
+            authDomain: "bacting-pharmacy-portal.firebaseapp.com",
+            projectId: "bacting-pharmacy-portal",
+            storageBucket: "bacting-pharmacy-portal.firebasestorage.app",
+            messagingSenderId: "124368292225",
+            appId: "1:124368292225:web:6b3c2c0d31c99ac9400080",
+            measurementId: "G-R1NKBZE1KL"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            try {
+                firebase.analytics();
+            } catch (e) {
+                console.log("Analytics not supported in this environment");
+            }
+        }
+        const db = firebase.firestore();
+
+        const DEFAULT_STATE = {
+            employees: [
+                { id: 'emp-1', name: 'Joh', pin: '1234', cycle: 'Sat-Fri', email: 'joh@bactingpharmacy.com' },
+                { id: 'emp-2', name: 'Shie', pin: '1234', cycle: 'Sat-Fri', email: 'shie@bactingpharmacy.com' },
+                { id: 'emp-3', name: 'Bebe', pin: '1234', cycle: 'Mon-Sun', email: 'bebe@bactingpharmacy.com' }
+            ],
+            logs: [
+                { id: 'log-1', employeeId: 'emp-1', clockIn: '2026-10-03T08:00:00', clockOut: '2026-10-03T18:00:00', lunchTaken: true, otDeduction: 0, status: 'Completed' }
+            ],
+            deductions: [
+                { id: 'ded-1', employeeId: 'emp-1', amount: 50, note: 'Uniform fee', date: '2026-10-05' }
+            ],
+            outOfStock: [
+                { id: 'os-1', employeeId: 'emp-1', loggerName: 'Joh', itemName: 'Amoxicillin 500mg', urgency: 'No Stock', status: 'Pending', date: '2026-11-01' }
+            ],
+            messages: [
+                { id: 'msg-1', senderId: 'manager', receiverId: 'emp-1', text: 'Welcome to Bacting Pharmacy! Please check your weekly schedule.', timestamp: '2026-10-06T09:00:00', read: false },
+                { id: 'msg-2', senderId: 'emp-1', receiverId: 'manager', text: 'Received, thank you manager!', timestamp: '2026-10-06T09:30:00', read: false }
+            ],
+            cashCounts: [],
+            cycleHistory: [],
+            activeSessions: {}
+        };
+
+        let appState = DEFAULT_STATE;
+        let activeManagerTab = 'payroll'; 
+        let managerOsFilter = '';
+        let currentView = { type: 'home', data: null };
+        let activeDashboardTab = 'attendance';
+        let pinTarget = { type: null, id: null, callback: null };
+        let clockOutTargetEmpId = null;
+
+        let formLunchTaken = true;
+        let formOtTaken = false;
+
+        db.collection("bacting_pharmacy").doc("portal_state").onSnapshot((doc) => {
+            if (doc.exists) {
+                appState = doc.data();
+                if (!appState.cycleHistory) appState.cycleHistory = [];
+                if (!appState.outOfStock) appState.outOfStock = DEFAULT_STATE.outOfStock;
+                if (!appState.employees) appState.employees = DEFAULT_STATE.employees;
+                if (!appState.cashCounts) appState.cashCounts = [];
+            } else {
+                db.collection("bacting_pharmacy").doc("portal_state").set(DEFAULT_STATE);
+                appState = DEFAULT_STATE;
+            }
+            render();
+        }, (error) => {
+            console.error("Firestore error, using default state: ", error);
+            appState = DEFAULT_STATE;
+            render();
+        });
+
+        function saveState() {
+            db.collection("bacting_pharmacy").doc("portal_state").set(appState).catch((error) => {
+                console.error("Error syncing with Firebase: ", error);
+            });
+        }
+
+        function formatPHP(amount) {
+            return '₱' + Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        setInterval(() => {
+            const clockEl = document.getElementById('live-clock');
+            if (clockEl) {
+                const now = new Date();
+                clockEl.innerText = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + now.toLocaleTimeString();
+            }
+        }, 1000);
+
+        function goToHome() {
+            currentView = { type: 'home', data: null };
+            render();
+        }
+
+        function render() {
+            const container = document.getElementById('main-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (currentView.type === 'home') {
+                container.innerHTML = renderHomeView();
+            } else if (currentView.type === 'employee-dashboard') {
+                container.innerHTML = renderEmployeeDashboard(currentView.data);
+            } else if (currentView.type === 'manager-portal') {
+                container.innerHTML = renderManagerPortal();
+            }
+        }
+
+        function renderHomeView() {
+            let employeeCards = (appState.employees || []).map(emp => {
+                const activeIn = (appState.activeSessions || {})[emp.id];
+                const statusBadge = activeIn 
+                    ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full"></span> Active Shift</span>' 
+                    : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Off Duty</span>';
+
+                return `
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:border-corporate-300 transition flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-10 h-10 bg-corporate-50 text-corporate-600 rounded-lg flex items-center justify-center font-bold text-base">
+                                    ${emp.name ? emp.name.charAt(0) : 'E'}
+                                </div>
+                                ${statusBadge}
+                            </div>
+                            <h3 class="font-semibold text-lg text-slate-900">${emp.name}</h3>
+                            <p class="text-xs text-slate-500 mb-5">Pay Cycle: <span class="font-medium text-slate-700">${emp.cycle}</span></p>
+                        </div>
+                        <div>
+                            <button onclick="requestEmployeeLogin('${emp.id}')" class="w-full bg-corporate-600 hover:bg-corporate-700 text-white font-medium py-2.5 px-4 rounded-xl text-sm shadow-sm transition flex items-center justify-center">
+                                <i class="fa-solid fa-right-to-bracket mr-2"></i> Access Portal
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl p-8 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-900 mb-1">Staff Dashboard</h2>
+                            <p class="text-slate-500 text-sm">Select your profile to view earnings, submit O.S reports, and manage time logs.</p>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
+                            <div id="live-clock" class="text-sm font-mono font-semibold text-corporate-600"></div>
+                            <span class="text-[11px] text-slate-400">System Clock</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                            <i class="fa-solid fa-users text-corporate-600 mr-2"></i> Personnel Directory
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                            ${employeeCards}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function requestEmployeeLogin(empId) {
+            pinTarget = {
+                type: 'employee',
+                id: empId,
+                callback: () => {
+                    currentView = { type: 'employee-dashboard', data: empId };
+                    activeDashboardTab = 'attendance';
+                    render();
+                }
+            };
+            document.getElementById('pin-modal-title').innerText = 'Employee Verification';
+            document.getElementById('pin-modal-subtitle').innerText = 'Enter your 4-digit PIN code';
+            document.getElementById('pin-input').value = '';
+            document.getElementById('pin-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('pin-input').focus(), 100);
+        }
+
+        function openManagerLoginModal() {
+            pinTarget = {
+                type: 'manager',
+                id: '3054',
+                callback: () => {
+                    currentView = { type: 'manager-portal', data: null };
+                    render();
+                }
+            };
+            document.getElementById('pin-modal-title').innerText = 'Manager Authorization';
+            document.getElementById('pin-modal-subtitle').innerText = 'Enter Management PIN code';
+            document.getElementById('pin-input').value = '';
+            document.getElementById('pin-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('pin-input').focus(), 100);
+        }
+
+        function closePinModal() {
+            document.getElementById('pin-modal').classList.add('hidden');
+        }
+
+        function appendPin(digit) {
+            const input = document.getElementById('pin-input');
+            if (input.value.length < 4) {
+                input.value += digit;
+            }
+            if (input.value.length === 4) {
+                submitPin();
+            }
+        }
+
+        function clearPin() {
+            document.getElementById('pin-input').value = '';
+        }
+
+        function backspacePin() {
+            const input = document.getElementById('pin-input');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function handlePinTyping(e) {
+            const input = document.getElementById('pin-input');
+            input.value = input.value.replace(/\D/g, '').slice(0, 4);
+            if (input.value.length === 4) {
+                submitPin();
+            }
+        }
+
+        function submitPin() {
+            const enteredPin = document.getElementById('pin-input').value;
+            if (pinTarget.type === 'manager') {
+                if (enteredPin === '3054') {
+                    closePinModal();
+                    pinTarget.callback();
+                } else {
+                    alert('Incorrect Manager PIN.');
+                    clearPin();
+                }
+            } else if (pinTarget.type === 'employee') {
+                const emp = (appState.employees || []).find(e => e.id === pinTarget.id);
+                if (emp && emp.pin === enteredPin) {
+                    closePinModal();
+                    pinTarget.callback();
+                } else {
+                    alert('Incorrect PIN.');
+                    clearPin();
+                }
+            }
+        }
+
+        function calculatePayrollForEmployee(empId) {
+            const logs = (appState.logs || []).filter(l => l.employeeId === empId && l.clockOut);
+            let totalHours = 0;
+            let grossPay = 0;
+
+            logs.forEach(log => {
+                const inTime = new Date(log.clockIn);
+                const outTime = new Date(log.clockOut);
+                const diffMs = outTime - inTime;
+                let rawMinutes = Math.floor(diffMs / 60000);
+
+                const hoursPart = Math.floor(rawMinutes / 60);
+                const minsPart = rawMinutes % 60;
+                let billableHours = hoursPart;
+                if (minsPart > 30) {
+                    billableHours += 1;
+                } else if (minsPart === 30) {
+                    billableHours += 0.5;
+                }
+
+                totalHours += billableHours;
+
+                let dayPay = 0;
+                if (billableHours === 10) {
+                    dayPay = 400;
+                } else if (billableHours > 10) {
+                    const otHours = billableHours - 10;
+                    dayPay = 400 + (otHours * 100);
+                } else {
+                    dayPay = billableHours * 40;
+                }
+
+                if (!log.lunchTaken) {
+                    dayPay += 50;
+                }
+
+                if (log.otDeduction && !isNaN(log.otDeduction)) {
+                    dayPay -= Number(log.otDeduction);
+                }
+
+                grossPay += dayPay;
+            });
+
+            const empDeductions = (appState.deductions || []).filter(d => d.employeeId === empId);
+            const totalDeductions = empDeductions.reduce((sum, d) => sum + Number(d.amount), 0);
+            const netPay = grossPay - totalDeductions;
+
+            return { totalHours, grossPay, empDeductions, totalDeductions, netPay, logs };
+        }
+
+        function renderEmployeeDashboard(empId) {
+            const emp = (appState.employees || []).find(e => e.id === empId) || { name: 'Staff', cycle: 'Sat-Fri' };
+            const payroll = calculatePayrollForEmployee(empId);
+            const activeSession = (appState.activeSessions || {})[empId];
+
+            if (activeDashboardTab === 'messaging') {
+                let hasChanges = false;
+                (appState.messages || []).forEach(m => {
+                    if (m.receiverId === empId && !m.read) {
+                        m.read = true;
+                        hasChanges = true;
+                    }
+                });
+                if (hasChanges) {
+                    saveState();
+                }
+            }
+
+            const messages = (appState.messages || []).filter(m => m.receiverId === empId || (m.senderId === empId && m.receiverId === 'manager'));
+            const unreadCount = (appState.messages || []).filter(m => m.receiverId === empId && !m.read).length;
+            const latestManagerMsg = (appState.messages || []).filter(m => m.receiverId === empId || m.receiverId === 'all').slice(-1)[0];
+
+            let logRows = payroll.logs.map(l => {
+                const inStr = new Date(l.clockIn).toLocaleString();
+                const outStr = new Date(l.clockOut).toLocaleString();
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 text-sm transition">
+                        <td class="py-3 px-4 font-medium text-slate-800">${inStr}</td>
+                        <td class="py-3 px-4 font-medium text-slate-800">${outStr}</td>
+                        <td class="py-3 px-4">${l.lunchTaken ? '<span class="text-slate-500">Yes</span>' : '<span class="text-corporate-600 font-semibold bg-corporate-50 px-2 py-0.5 rounded text-xs">No (+₱50)</span>'}</td>
+                        <td class="py-3 px-4">${l.otDeduction ? '<span class="text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded text-xs">-' + formatPHP(l.otDeduction) + '</span>' : '<span class="text-slate-400">None</span>'}</td>
+                        <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded text-xs font-semibold">Completed</span></td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-sm">No completed shift logs found.</td></tr>`;
+
+            let deductionRows = payroll.empDeductions.map(d => `
+                <tr class="border-b border-slate-100 text-sm hover:bg-slate-50 transition">
+                    <td class="py-3 px-4 text-slate-600">${d.date || 'Recent'}</td>
+                    <td class="py-3 px-4 text-slate-800 font-medium">${d.note || 'Deduction'}</td>
+                    <td class="py-3 px-4 text-right text-red-600 font-semibold">-${formatPHP(d.amount)}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="3" class="py-6 text-center text-slate-400 text-sm">No manager deductions recorded.</td></tr>`;
+
+            const empOsList = (appState.outOfStock || []).filter(o => o.employeeId === empId || o.loggerName === emp.name);
+            let osRows = empOsList.map(o => {
+                let badgeColor = 'bg-amber-50 text-amber-700 border border-amber-200';
+                if (o.status === 'Ordered') badgeColor = 'bg-sky-50 text-sky-700 border border-sky-200';
+                if (o.status === 'Resolved') badgeColor = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 text-slate-900 font-medium">${o.loggerName || emp.name}</td>
+                        <td class="py-3 px-4 text-slate-900 font-medium">${o.itemName}</td>
+                        <td class="py-3 px-4"><span class="font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded text-xs">${o.urgency || 'Low Stock'}</span></td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded text-xs font-medium ${badgeColor}">${o.status}</span></td>
+                        <td class="py-3 px-4 text-slate-400 text-xs">${o.date || 'Recent'}</td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-sm">No out-of-stock items logged.</td></tr>`;
+
+            let chatMessages = messages.map(m => {
+                const isMe = m.senderId === empId;
+                const timeStr = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return `
+                    <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} mb-3">
+                        <div class="max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm ${isMe ? 'bg-corporate-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'}">
+                            <p class="font-semibold text-xs mb-0.5 opacity-75">${isMe ? 'You' : 'Management'}</p>
+                            <p>${m.text}</p>
+                        </div>
+                        <span class="text-[10px] text-slate-400 mt-1">${timeStr}</span>
+                    </div>
+                `;
+            }).join('') || `<p class="text-center text-slate-400 text-sm py-8">No messages recorded.</p>`;
+
+            let tabContentHTML = '';
+            if (activeDashboardTab === 'attendance') {
+                tabContentHTML = `
+                    <div class="space-y-6">
+                        <!-- Sticky Memo Pad Notice -->
+                        <div class="memo-pad rounded-2xl p-5 relative text-slate-900 shadow-md">
+                            <div class="absolute -top-3 left-6 bg-amber-500 text-white px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow">
+                                <i class="fa-solid fa-note-sticky mr-1"></i> Management Memo
+                            </div>
+                            <div class="mt-1">
+                                <p class="text-sm font-semibold text-slate-800">
+                                    ${latestManagerMsg ? latestManagerMsg.text : 'Welcome to Bacting Pharmacy shift clock terminal! Please record your attendance accurately.'}
+                                </p>
+                                <p class="text-[11px] text-slate-600 mt-2 font-mono">
+                                    ${latestManagerMsg ? 'From: Management • ' + new Date(latestManagerMsg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'System Notice'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-8 shadow-sm border border-slate-200 text-center">
+                            <h3 class="text-lg font-bold text-slate-900 mb-1">Time Clock Terminal</h3>
+                            <p class="text-sm text-slate-500 mb-6">Clock in at the start of shift and clock out when finished.</p>
+                            
+                            <div class="flex justify-center items-center space-x-4">
+                                ${activeSession ? `
+                                    <button disabled class="bg-slate-100 text-slate-400 border border-slate-200 font-medium px-6 py-3 rounded-xl text-sm cursor-not-allowed">
+                                        Clock In (Active)
+                                    </button>
+                                    <button onclick="openClockOutModal('${emp.id}')" class="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-3 rounded-xl text-sm shadow transition flex items-center">
+                                        <i class="fa-solid fa-right-from-bracket mr-2"></i> Clock Out Now
+                                    </button>
+                                ` : `
+                                    <button onclick="handleClockIn('${emp.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-xl text-sm shadow transition flex items-center">
+                                        <i class="fa-solid fa-right-to-bracket mr-2"></i> Clock In Now
+                                    </button>
+                                    <button disabled class="bg-slate-100 text-slate-400 border border-slate-200 font-medium px-6 py-3 rounded-xl text-sm cursor-not-allowed">
+                                        Clock Out (Inactive)
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-clock-rotate-left text-corporate-600 mr-2"></i> Attendance Log History
+                            </h3>
+                            <div class="overflow-x-auto max-h-72 overflow-y-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                            <th class="py-3 px-4">Clock In</th>
+                                            <th class="py-3 px-4">Clock Out</th>
+                                            <th class="py-3 px-4">Lunch Taken?</th>
+                                            <th class="py-3 px-4">OT Deduction</th>
+                                            <th class="py-3 px-4">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${logRows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeDashboardTab === 'deductions') {
+                tabContentHTML = `
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-file-invoice-dollar text-corporate-600 mr-2"></i> Deductions Breakdown & Notes
+                        </h3>
+                        <p class="text-sm text-slate-500">Itemized list of administrative deductions affecting your net take-home salary.</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                        <th class="py-3 px-4">Date</th>
+                                        <th class="py-3 px-4">Description / Note</th>
+                                        <th class="py-3 px-4 text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${deductionRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else if (activeDashboardTab === 'outofstock') {
+                tabContentHTML = `
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-6">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 flex items-center">
+                                    <i class="fa-solid fa-box-archive text-corporate-600 mr-2"></i> Out-of-Stock Item Logs
+                                </h3>
+                                <p class="text-sm text-slate-500">Monitor and track low inventory reported across pharmacy branches.</p>
+                            </div>
+                            <button onclick="openMainOsModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow transition flex items-center">
+                                <i class="fa-solid fa-plus mr-2"></i> Log O.S Item
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                        <th class="py-3 px-4">Logger Name</th>
+                                        <th class="py-3 px-4">Item Name</th>
+                                        <th class="py-3 px-4">Stock Urgency</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4">Date Reported</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${osRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else if (activeDashboardTab === 'messaging') {
+                tabContentHTML = `
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col h-[500px]">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-200 pb-3">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center">
+                                <i class="fa-solid fa-comments text-corporate-600 mr-2"></i> Direct Communications
+                            </h3>
+                            ${unreadCount > 0 ? `<span class="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-medium">${unreadCount} Unread</span>` : ''}
+                        </div>
+                        
+                        <div id="chat-messages-container" class="flex-grow overflow-y-auto bg-slate-50 p-4 rounded-xl mb-4 border border-slate-200">
+                            ${chatMessages}
+                        </div>
+
+                        <form onsubmit="sendEmployeeMessage(event, '${emp.id}')" class="flex gap-2">
+                            <input type="text" id="chat-input-text" placeholder="Type message to management..." class="flex-grow px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                            <button type="submit" class="bg-corporate-600 hover:bg-corporate-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm shadow transition">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center">
+                        <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                            <div class="w-12 h-12 bg-corporate-50 text-corporate-600 rounded-xl flex items-center justify-center font-bold text-xl border border-corporate-200">
+                                ${emp.name ? emp.name.charAt(0) : 'E'}
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900">${emp.name}</h2>
+                                <p class="text-xs text-slate-500">Pay Cycle: <span class="font-medium text-slate-700">${emp.cycle}</span></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="promptChangePin('${emp.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center border border-slate-200">
+                                <i class="fa-solid fa-key mr-2 text-slate-500"></i> Change PIN
+                            </button>
+                            <button onclick="goToHome()" class="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center shadow-sm">
+                                <i class="fa-solid fa-arrow-left mr-2"></i> Log Out
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Hours Worked</p>
+                            <p class="text-2xl font-bold text-slate-900 mt-1">${payroll.totalHours} hrs</p>
+                            <span class="text-xs text-slate-400">Rounded calculation</span>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Gross Salary</p>
+                            <p class="text-2xl font-bold text-emerald-600 mt-1">${formatPHP(payroll.grossPay)}</p>
+                            <span class="text-xs text-slate-400">Includes allowance & OT</span>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Deductions</p>
+                            <p class="text-2xl font-bold text-red-600 mt-1">-${formatPHP(payroll.totalDeductions)}</p>
+                            <span class="text-xs text-slate-400">Assigned administrative fees</span>
+                        </div>
+                        <div class="bg-corporate-600 p-5 rounded-xl border border-corporate-700 shadow text-white">
+                            <p class="text-xs text-corporate-100 font-semibold uppercase tracking-wider">Net Take-Home Pay</p>
+                            <p class="text-2xl font-bold mt-1">${formatPHP(payroll.netPay)}</p>
+                            <span class="text-xs text-corporate-100">Payable amount</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap border-b border-slate-200 gap-2 text-sm font-medium">
+                        <button onclick="switchDashboardTab('attendance')" class="pb-3 px-3 flex items-center border-b-2 ${activeDashboardTab === 'attendance' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-clock mr-2"></i> Attendance & Clock
+                        </button>
+                        <button onclick="switchDashboardTab('deductions')" class="pb-3 px-3 flex items-center border-b-2 ${activeDashboardTab === 'deductions' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-file-invoice-dollar mr-2"></i> Deductions & Notes
+                        </button>
+                        <button onclick="switchDashboardTab('outofstock')" class="pb-3 px-3 flex items-center border-b-2 ${activeDashboardTab === 'outofstock' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-box-archive mr-2"></i> Out of Stock Logs
+                        </button>
+                        <button onclick="switchDashboardTab('messaging')" class="pb-3 px-3 flex items-center border-b-2 ${activeDashboardTab === 'messaging' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-comments mr-2"></i> Communications ${unreadCount > 0 ? `<span class="ml-2 bg-red-600 text-white text-xs px-1.5 py-0.2 rounded-full">${unreadCount}</span>` : ''}
+                        </button>
+                    </div>
+
+                    ${tabContentHTML}
+                </div>
+            `;
+        }
+
+        function switchDashboardTab(tabName) {
+            activeDashboardTab = tabName;
+            render();
+        }
+
+        function calculateModalCashTotal() {
+            const qtyInputs = document.querySelectorAll('.modal-cash-qty');
+            let rawTotal = 0;
+            qtyInputs.forEach(input => {
+                const denom = parseFloat(input.getAttribute('data-val')) || 0;
+                const qty = parseInt(input.value) || 0;
+                rawTotal += (denom * qty);
+            });
+
+            const netTotal = Math.max(0, rawTotal - 3000);
+
+            const rawEl = document.getElementById('modal-raw-total');
+            if (rawEl) rawEl.innerText = formatPHP(rawTotal);
+
+            const netEl = document.getElementById('modal-net-total');
+            if (netEl) netEl.innerText = formatPHP(netTotal);
+
+            return { rawTotal, netTotal };
+        }
+
+        function openHeaderCashCounterModal() {
+            document.querySelectorAll('.modal-cash-qty').forEach(input => input.value = '0');
+            document.getElementById('modal-cash-staff').value = '';
+            document.getElementById('modal-cash-note').value = '';
+            calculateModalCashTotal();
+            document.getElementById('header-cash-counter-modal').classList.remove('hidden');
+        }
+
+        function closeHeaderCashCounterModal() {
+            document.getElementById('header-cash-counter-modal').classList.add('hidden');
+        }
+
+        function saveGlobalCashCount(e) {
+            e.preventDefault();
+            const qtyInputs = document.querySelectorAll('.modal-cash-qty');
+            let rawTotal = 0;
+            let breakdown = {};
+            qtyInputs.forEach(input => {
+                const denom = input.getAttribute('data-val');
+                const qty = parseInt(input.value) || 0;
+                breakdown[denom] = qty;
+                rawTotal += (parseFloat(denom) * qty);
+            });
+
+            const netTotal = Math.max(0, rawTotal - 3000);
+            const staffName = document.getElementById('modal-cash-staff').value.trim();
+            const note = document.getElementById('modal-cash-note').value.trim();
+
+            if (!appState.cashCounts) appState.cashCounts = [];
+            appState.cashCounts.push({
+                id: 'cc-' + Date.now(),
+                employeeName: staffName || 'Staff',
+                type: 'Closing Count',
+                rawTotal: rawTotal,
+                total: netTotal,
+                breakdown: breakdown,
+                note: note || 'Closing cash drawer count',
+                date: new Date().toLocaleString()
+            });
+
+            alert(`Closing Cash Count Saved Successfully!\nRaw Total: ${formatPHP(rawTotal)}\nLess Float: -₱3,000.00\nNet Total: ${formatPHP(netTotal)}`);
+            closeHeaderCashCounterModal();
+            saveState();
+        }
+
+        function openMainOsModal() {
+            document.getElementById('os-logger-name').value = '';
+            document.getElementById('os-item-name').value = '';
+            document.getElementById('os-urgency').value = 'Low Stock';
+            document.getElementById('os-modal').classList.remove('hidden');
+        }
+
+        function closeOsModal() {
+            document.getElementById('os-modal').classList.add('hidden');
+        }
+
+        function handleEmployeeOsSubmit(e) {
+            e.preventDefault();
+            const loggerName = document.getElementById('os-logger-name').value.trim();
+            const itemName = document.getElementById('os-item-name').value.trim();
+            const urgency = document.getElementById('os-urgency').value;
+
+            if (itemName && loggerName) {
+                if (!appState.outOfStock) appState.outOfStock = [];
+                appState.outOfStock.push({
+                    id: 'os-' + Date.now(),
+                    loggerName: loggerName,
+                    itemName: itemName,
+                    urgency: urgency,
+                    status: 'Pending',
+                    date: new Date().toLocaleDateString()
+                });
+                closeOsModal();
+                alert('Out-of-stock item logged successfully.');
+                saveState();
+            }
+        }
+
+        function handleClockIn(empId) {
+            if (!appState.activeSessions) appState.activeSessions = {};
+            appState.activeSessions[empId] = new Date().toISOString();
+            saveState();
+        }
+
+        function openClockOutModal(empId) {
+            clockOutTargetEmpId = empId;
+            formLunchTaken = true;
+            formOtTaken = false;
+            updateClockOutFormUI();
+            document.getElementById('modal-ot-amount').value = '';
+            document.getElementById('custom-prompt-modal').classList.remove('hidden');
+        }
+
+        function closeClockOutModal() {
+            document.getElementById('custom-prompt-modal').classList.add('hidden');
+        }
+
+        function setLunch(status) {
+            formLunchTaken = status;
+            updateClockOutFormUI();
+        }
+
+        function setOt(status) {
+            formOtTaken = status;
+            updateClockOutFormUI();
+        }
+
+        function updateClockOutFormUI() {
+            const lunchYes = document.getElementById('lunch-yes-btn');
+            const lunchNo = document.getElementById('lunch-no-btn');
+            if (formLunchTaken) {
+                lunchYes.className = "py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm";
+                lunchNo.className = "py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-white border-slate-200 text-slate-600 hover:bg-slate-50";
+            } else {
+                lunchYes.className = "py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-white border-slate-200 text-slate-600 hover:bg-slate-50";
+                lunchNo.className = "py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm";
+            }
+
+            const otYes = document.getElementById('ot-yes-btn');
+            const otNo = document.getElementById('ot-no-btn');
+            const otWrapper = document.getElementById('ot-amount-wrapper');
+
+            if (formOtTaken) {
+                otYes.className = "py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm";
+                otNo.className = "py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-white border-slate-200 text-slate-600 hover:bg-slate-50";
+                otWrapper.classList.remove('hidden');
+            } else {
+                otYes.className = "py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-white border-slate-200 text-slate-600 hover:bg-slate-50";
+                otNo.className = "py-2.5 px-3 rounded-xl border text-sm font-semibold transition flex items-center justify-center bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm";
+                otWrapper.classList.add('hidden');
+            }
+        }
+
+        function submitClockOutModal(e) {
+            e.preventDefault();
+            if (!clockOutTargetEmpId) return;
+
+            let otDeduction = 0;
+            if (formOtTaken) {
+                const amtInput = document.getElementById('modal-ot-amount').value;
+                otDeduction = parseFloat(amtInput) || 0;
+            }
+
+            const clockInTime = (appState.activeSessions || {})[clockOutTargetEmpId] || new Date().toISOString();
+            if (!appState.logs) appState.logs = [];
+            appState.logs.push({
+                id: 'log-' + Date.now(),
+                employeeId: clockOutTargetEmpId,
+                clockIn: clockInTime,
+                clockOut: new Date().toISOString(),
+                lunchTaken: formLunchTaken,
+                otDeduction: otDeduction,
+                status: 'Completed'
+            });
+
+            if (appState.activeSessions) delete appState.activeSessions[clockOutTargetEmpId];
+            closeClockOutModal();
+            alert('Clock-out recorded successfully.');
+            saveState();
+        }
+
+        function promptChangePin(empId) {
+            const newPin = prompt('Enter new 4-digit PIN:');
+            if (newPin && newPin.length === 4 && !isNaN(newPin)) {
+                const emp = (appState.employees || []).find(e => e.id === empId);
+                if (emp) {
+                    emp.pin = newPin;
+                    alert('PIN successfully updated.');
+                    saveState();
+                }
+            } else if (newPin) {
+                alert('Invalid PIN. Please enter exactly 4 digits.');
+            }
+        }
+
+        function sendEmployeeMessage(e, empId) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input-text');
+            const text = input.value.trim();
+            if (text) {
+                if (!appState.messages) appState.messages = [];
+                appState.messages.push({
+                    id: 'msg-' + Date.now(),
+                    senderId: empId,
+                    receiverId: 'manager',
+                    text: text,
+                    timestamp: new Date().toISOString(),
+                    read: false
+                });
+                input.value = '';
+                saveState();
+            }
+        }
+
+        function switchManagerTab(tabName) {
+            activeManagerTab = tabName;
+            render();
+        }
+
+        function renderManagerPortal() {
+            let employeeOptionsHTML = (appState.employees || []).map(e => `<option value="${e.id}">${e.name} (${e.cycle})</option>`).join('');
+
+            let payrollTableRows = (appState.employees || []).map(emp => {
+                const p = calculatePayrollForEmployee(emp.id);
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 text-sm transition">
+                        <td class="py-3 px-4 font-semibold text-slate-900">${emp.name}</td>
+                        <td class="py-3 px-4"><span class="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded text-xs font-medium border border-slate-200">${emp.cycle}</span></td>
+                        <td class="py-3 px-4 font-medium">${p.totalHours} hrs</td>
+                        <td class="py-3 px-4 font-medium text-emerald-600">${formatPHP(p.grossPay)}</td>
+                        <td class="py-3 px-4 font-medium text-red-600">-${formatPHP(p.totalDeductions)}</td>
+                        <td class="py-3 px-4 font-bold text-slate-900">${formatPHP(p.netPay)}</td>
+                        <td class="py-3 px-4">
+                            <button onclick="closeEmployeeCycle('${emp.id}')" class="bg-corporate-600 hover:bg-corporate-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition flex items-center">
+                                <i class="fa-solid fa-box-archive mr-1"></i> Close Cycle & Email
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            let allLogsRows = (appState.logs || []).map(l => {
+                const emp = (appState.employees || []).find(e => e.id === l.employeeId);
+                const empName = emp ? emp.name : 'Unknown';
+                const inStr = new Date(l.clockIn).toLocaleString();
+                const outStr = l.clockOut ? new Date(l.clockOut).toLocaleString() : 'Active Shift';
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 text-sm transition">
+                        <td class="py-3 px-4 font-medium text-slate-900">${empName}</td>
+                        <td class="py-3 px-4 text-slate-600">${inStr}</td>
+                        <td class="py-3 px-4 text-slate-600">${outStr}</td>
+                        <td class="py-3 px-4">
+                            <span class="${l.lunchTaken ? 'text-slate-500' : 'text-corporate-600 font-semibold'}">${l.lunchTaken ? 'Yes' : 'No (+₱50)'}</span>
+                            <button onclick="toggleManagerLunch('${l.id}')" class="ml-2 text-xs bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded font-medium text-slate-700">Toggle</button>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="${l.otDeduction > 0 ? 'text-red-600 font-semibold' : 'text-slate-400'}">${l.otDeduction > 0 ? '-' + formatPHP(l.otDeduction) : 'None'}</span>
+                            <button onclick="editManagerOT('${l.id}')" class="ml-2 text-xs bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded font-medium text-slate-700">Edit</button>
+                        </td>
+                        <td class="py-3 px-4 space-x-1">
+                            <button onclick="openEditLogModal('${l.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded text-xs font-medium transition" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteLog('${l.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium transition" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="6" class="py-6 text-center text-slate-400 text-sm">No time logs recorded.</td></tr>`;
+
+            let allDeductionsRows = (appState.deductions || []).map(d => {
+                const emp = (appState.employees || []).find(e => e.id === d.employeeId);
+                const empName = emp ? emp.name : 'Unknown';
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 text-sm transition">
+                        <td class="py-3 px-4 font-medium text-slate-900">${empName}</td>
+                        <td class="py-3 px-4 text-slate-600">${d.date || 'Recent'}</td>
+                        <td class="py-3 px-4 text-slate-700">${d.note}</td>
+                        <td class="py-3 px-4 text-red-600 font-semibold">${formatPHP(d.amount)}</td>
+                        <td class="py-3 px-4 space-x-1">
+                            <button onclick="editDeductionModal('${d.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-xs font-medium transition">Edit</button>
+                            <button onclick="deleteDeduction('${d.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded text-xs font-medium transition">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="5" class="py-6 text-center text-slate-400 text-sm">No manual deductions recorded.</td></tr>`;
+
+            const osList = (appState.outOfStock || []).filter(o => {
+                if (!managerOsFilter) return true;
+                const q = managerOsFilter.toLowerCase();
+                return o.itemName.toLowerCase().includes(q) || o.status.toLowerCase().includes(q) || (o.loggerName && o.loggerName.toLowerCase().includes(q));
+            });
+
+            const osTotal = (appState.outOfStock || []).length;
+            const osPending = (appState.outOfStock || []).filter(o => o.status === 'Pending').length;
+            const osOrdered = (appState.outOfStock || []).filter(o => o.status === 'Ordered').length;
+
+            let managerOsRows = osList.map(o => {
+                let badgeColor = 'bg-amber-50 text-amber-700 border border-amber-200';
+                if (o.status === 'Ordered') badgeColor = 'bg-sky-50 text-sky-700 border border-sky-200';
+                if (o.status === 'Resolved') badgeColor = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 text-sm transition">
+                        <td class="py-3 px-4 font-semibold text-slate-900">${o.loggerName || 'Staff'}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-900">${o.itemName}</td>
+                        <td class="py-3 px-4"><span class="font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded text-xs">${o.urgency || 'Low Stock'}</span></td>
+                        <td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded text-xs font-medium ${badgeColor}">${o.status}</span></td>
+                        <td class="py-3 px-4 text-slate-400 text-xs">${o.date || 'Recent'}</td>
+                        <td class="py-3 px-4 space-x-1 flex items-center">
+                            <select onchange="updateOsStatus('${o.id}', this.value)" class="text-xs px-2 py-1 border border-slate-300 rounded bg-white focus:outline-none focus:border-corporate-500">
+                                <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Ordered" ${o.status === 'Ordered' ? 'selected' : ''}>Ordered</option>
+                                <option value="Resolved" ${o.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                            </select>
+                            <button onclick="deleteOsItem('${o.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium transition" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="6" class="py-6 text-center text-slate-400 text-sm">No out-of-stock items found.</td></tr>`;
+
+            let allCashCountsRows = (appState.cashCounts || []).map(c => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 text-sm transition">
+                    <td class="py-3 px-4 text-slate-600">${c.date}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-900">${c.employeeName || 'Staff'}</td>
+                    <td class="py-3 px-4"><span class="font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded">${c.type}</span></td>
+                    <td class="py-3 px-4 text-slate-500">${formatPHP(c.rawTotal)}</td>
+                    <td class="py-3 px-4 text-red-500 font-medium">-₱3,000.00</td>
+                    <td class="py-3 px-4 font-bold text-emerald-600">${formatPHP(c.total)}</td>
+                    <td class="py-3 px-4 text-slate-500 text-xs">${c.note || 'None'}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="7" class="py-6 text-center text-slate-400 text-sm">No cash count logs found.</td></tr>`;
+
+            let empManageCards = (appState.employees || []).map(emp => `
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-semibold text-slate-900 text-sm">${emp.name}</h4>
+                        <p class="text-xs text-slate-500">Cycle: ${emp.cycle} | Email: ${emp.email || 'Not set'}</p>
+                    </div>
+                    <button onclick="deleteEmployee('${emp.id}')" class="text-red-400 hover:text-red-600 text-sm p-2 transition"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+
+            let historyRows = (appState.cycleHistory || []).map((record, index) => {
+                const emp = (appState.employees || []).find(e => e.id === record.employeeId);
+                const empName = emp ? emp.name : 'Unknown';
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 text-sm transition">
+                        <td class="py-3 px-4 font-semibold text-slate-900">${record.cycleName}</td>
+                        <td class="py-3 px-4 text-slate-700">${empName}</td>
+                        <td class="py-3 px-4">${record.totalHours} hrs</td>
+                        <td class="py-3 px-4 text-emerald-600 font-medium">${formatPHP(record.grossPay)}</td>
+                        <td class="py-3 px-4 text-red-600 font-medium">-${formatPHP(record.totalDeductions)}</td>
+                        <td class="py-3 px-4 font-bold text-slate-900">${formatPHP(record.netPay)}</td>
+                        <td class="py-3 px-4">
+                            <button onclick="emailPayrollStatement('${index}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center border border-slate-200">
+                                <i class="fa-solid fa-envelope mr-1 text-slate-500"></i> Resend Email
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || `<tr><td colspan="7" class="py-6 text-center text-slate-400 text-sm">No archived cycle payrolls found.</td></tr>`;
+
+            let managerChatContacts = (appState.employees || []).map(emp => {
+                const unread = (appState.messages || []).filter(m => m.senderId === emp.id && m.receiverId === 'manager' && !m.read).length;
+                return `
+                    <button onclick="selectManagerChat('${emp.id}')" class="w-full text-left p-3 rounded-xl transition flex justify-between items-center bg-slate-50 hover:bg-slate-100 border border-slate-200 mb-2">
+                        <div>
+                            <p class="font-semibold text-slate-900 text-sm">${emp.name}</p>
+                            <p class="text-xs text-slate-500">Cycle: ${emp.cycle}</p>
+                        </div>
+                        ${unread > 0 ? `<span class="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full font-medium">${unread} New</span>` : ''}
+                    </button>
+                `;
+            }).join('');
+
+            let managerTabContentHTML = '';
+            if (activeManagerTab === 'payroll') {
+                managerTabContentHTML = `
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-calculator text-corporate-600 mr-2"></i> Payroll Summary & Cycle Management
+                            </h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                            <th class="py-3 px-4">Employee</th>
+                                            <th class="py-3 px-4">Cycle</th>
+                                            <th class="py-3 px-4">Total Hours</th>
+                                            <th class="py-3 px-4">Gross Pay</th>
+                                            <th class="py-3 px-4">Deductions</th>
+                                            <th class="py-3 px-4">Net Take-Home Pay</th>
+                                            <th class="py-3 px-4">Cycle Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${payrollTableRows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-envelope-open-text text-corporate-600 mr-2"></i> Cycle Payroll History & Dispatcher
+                            </h3>
+                            <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                            <th class="py-3 px-4">Cycle Period</th>
+                                            <th class="py-3 px-4">Employee</th>
+                                            <th class="py-3 px-4">Total Hours</th>
+                                            <th class="py-3 px-4">Gross Pay</th>
+                                            <th class="py-3 px-4">Deductions</th>
+                                            <th class="py-3 px-4">Net Pay</th>
+                                            <th class="py-3 px-4">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${historyRows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeManagerTab === 'cash-audit') {
+                managerTabContentHTML = `
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-cash-register text-corporate-600 mr-2"></i> Branch Closing Cash Counter Audit Logs
+                        </h3>
+                        <p class="text-sm text-slate-500">Review all closing cash counts submitted by staff (less ₱3,000 float).</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                        <th class="py-3 px-4">Date & Time</th>
+                                        <th class="py-3 px-4">Staff Name</th>
+                                        <th class="py-3 px-4">Count Type</th>
+                                        <th class="py-3 px-4">Raw Total</th>
+                                        <th class="py-3 px-4">Float Deduction</th>
+                                        <th class="py-3 px-4">Net Total</th>
+                                        <th class="py-3 px-4">Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${allCashCountsRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else if (activeManagerTab === 'add-emp') {
+                managerTabContentHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-user-plus text-corporate-600 mr-2"></i> Add New Employee
+                            </h3>
+                            <form onsubmit="handleAddNewEmployee(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Employee Name</label>
+                                    <input type="text" id="new-emp-name" placeholder="e.g. Maria" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Email Address</label>
+                                    <input type="email" id="new-emp-email" placeholder="employee@email.com" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Default PIN</label>
+                                    <input type="text" id="new-emp-pin" value="1234" maxlength="4" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Salary Cycle</label>
+                                    <select id="new-emp-cycle" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-white">
+                                        <option value="Sat-Fri">Saturday – Friday (Sat–Fri)</option>
+                                        <option value="Mon-Sun">Monday – Sunday (Mon–Sun)</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full bg-corporate-600 hover:bg-corporate-700 text-white font-medium py-2.5 rounded-xl text-sm shadow transition">Add Employee</button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-id-card text-corporate-600 mr-2"></i> Current Employee Directory
+                            </h3>
+                            <div class="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+                                ${empManageCards}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeManagerTab === 'deductions') {
+                managerTabContentHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-hand-holding-dollar text-corporate-600 mr-2"></i> Assign Employee Deduction
+                            </h3>
+                            <form onsubmit="handleManagerAddDeduction(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Select Employee</label>
+                                    <select id="ded-emp-id" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-white" required>
+                                        ${employeeOptionsHTML}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (₱)</label>
+                                    <input type="number" step="0.01" id="ded-amount" placeholder="e.g. 150.00" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Note / Description</label>
+                                    <input type="text" id="ded-note" placeholder="e.g. Uniform fee, cash advance" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                                </div>
+                                <button type="submit" class="w-full bg-corporate-600 hover:bg-corporate-700 text-white font-medium py-2.5 rounded-xl text-sm shadow transition">Assign Deduction</button>
+                            </form>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-file-invoice-dollar text-corporate-600 mr-2"></i> Deduction Management
+                            </h3>
+                            <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                            <th class="py-3 px-4">Employee</th>
+                                            <th class="py-3 px-4">Date</th>
+                                            <th class="py-3 px-4">Note</th>
+                                            <th class="py-3 px-4">Amount</th>
+                                            <th class="py-3 px-4">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${allDeductionsRows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeManagerTab === 'logs') {
+                managerTabContentHTML = `
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-plus-circle text-corporate-600 mr-2"></i> Add Manual Time Log
+                            </h3>
+                            <form onsubmit="handleManagerAddManualLog(event)" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Employee</label>
+                                    <select id="manual-log-emp" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-white" required>
+                                        ${employeeOptionsHTML}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Clock In Date & Time</label>
+                                    <input type="datetime-local" id="manual-log-in" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Clock Out Date & Time</label>
+                                    <input type="datetime-local" id="manual-log-out" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Lunch Taken?</label>
+                                    <select id="manual-log-lunch" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-white">
+                                        <option value="true">Yes</option>
+                                        <option value="false">No (+₱50 allowance)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="submit" class="w-full bg-corporate-600 hover:bg-corporate-700 text-white font-medium py-2.5 rounded-xl text-sm shadow transition">Add Log</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                            <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                                <i class="fa-solid fa-clock text-corporate-600 mr-2"></i> Time Log Management & Corrections
+                            </h3>
+                            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                            <th class="py-3 px-4">Employee</th>
+                                            <th class="py-3 px-4">Clock In</th>
+                                            <th class="py-3 px-4">Clock Out</th>
+                                            <th class="py-3 px-4">Lunch Status</th>
+                                            <th class="py-3 px-4">OT Deduction</th>
+                                            <th class="py-3 px-4">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${allLogsRows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeManagerTab === 'os-inventory') {
+                managerTabContentHTML = `
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Out of Stock</p>
+                                <p class="text-2xl font-bold text-slate-900 mt-1">${osTotal} items</p>
+                            </div>
+                            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Pending Review</p>
+                                <p class="text-2xl font-bold text-amber-600 mt-1">${osPending} items</p>
+                            </div>
+                            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Ordered / Restocking</p>
+                                <p class="text-2xl font-bold text-sky-600 mt-1">${osOrdered} items</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 space-y-4">
+                            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <h3 class="text-base font-bold text-slate-900 flex items-center">
+                                    <i class="fa-solid fa-box-archive text-corporate-600 mr-2"></i> Inventory Tracking & O.S Control
+                                </h3>
+                                <input type="text" value="${managerOsFilter}" oninput="filterManagerOs(this)" placeholder="Search item, logger, status..." class="px-3.5 py-2 border border-slate-300 rounded-xl text-sm w-full md:w-72 focus:outline-none focus:border-corporate-500 bg-slate-50">
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                            <th class="py-3 px-4">Logger Name</th>
+                                            <th class="py-3 px-4">Item Name</th>
+                                            <th class="py-3 px-4">Stock Urgency</th>
+                                            <th class="py-3 px-4">Status</th>
+                                            <th class="py-3 px-4">Date</th>
+                                            <th class="py-3 px-4">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${managerOsRows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeManagerTab === 'chat') {
+                managerTabContentHTML = `
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+                        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center">
+                            <i class="fa-solid fa-comments text-corporate-600 mr-2"></i> Management Communications Center
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="border-r border-slate-200 pr-4">
+                                <h4 class="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-3">Staff Directory</h4>
+                                <div class="space-y-2">
+                                    ${managerChatContacts}
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 flex flex-col h-[400px]">
+                                <div id="manager-chat-window" class="flex-grow overflow-y-auto bg-slate-50 p-4 rounded-xl mb-4 border border-slate-200 flex flex-col justify-center items-center text-slate-400 text-sm">
+                                    <p class="text-center"><i class="fa-solid fa-hand-pointer text-xl mb-2 text-slate-400"></i><br>Select a staff member from the directory to review and reply.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center font-bold text-xl">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900">Executive Management Portal</h2>
+                                <p class="text-xs text-slate-500">Restricted Corporate Control Center</p>
+                            </div>
+                        </div>
+                        <button onclick="goToHome()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition flex items-center shadow-sm mt-4 md:mt-0">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Exit Manager Portal
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap border-b border-slate-200 gap-2 text-sm font-medium">
+                        <button onclick="switchManagerTab('payroll')" class="pb-3 px-3 flex items-center border-b-2 ${activeManagerTab === 'payroll' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-calculator mr-2"></i> Payroll & Cycles
+                        </button>
+                        <button onclick="switchManagerTab('cash-audit')" class="pb-3 px-3 flex items-center border-b-2 ${activeManagerTab === 'cash-audit' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-cash-register mr-2"></i> Closing Cash Audits
+                        </button>
+                        <button onclick="switchManagerTab('add-emp')" class="pb-3 px-3 flex items-center border-b-2 ${activeManagerTab === 'add-emp' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-user-plus mr-2"></i> Add Employee
+                        </button>
+                        <button onclick="switchManagerTab('deductions')" class="pb-3 px-3 flex items-center border-b-2 ${activeManagerTab === 'deductions' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-file-invoice-dollar mr-2"></i> Deductions
+                        </button>
+                        <button onclick="switchManagerTab('logs')" class="pb-3 px-3 flex items-center border-b-2 ${activeManagerTab === 'logs' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-clock mr-2"></i> Time Logs
+                        </button>
+                        <button onclick="switchManagerTab('os-inventory')" class="pb-3 px-3 flex items-center border-b-2 ${activeManagerTab === 'os-inventory' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-box-archive mr-2"></i> O.S Inventory (${osPending} Pending)
+                        </button>
+                        <button onclick="switchManagerTab('chat')" class="pb-3 px-3 flex items-center border-b-2 ${activeManagerTab === 'chat' ? 'border-corporate-600 text-corporate-600 font-semibold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                            <i class="fa-solid fa-comments mr-2"></i> Communications
+                        </button>
+                    </div>
+
+                    ${managerTabContentHTML}
+                </div>
+            `;
+        }
+
+        function filterManagerOs(input) {
+            managerOsFilter = input.value;
+        }
+
+        function updateOsStatus(osId, newStatus) {
+            const item = (appState.outOfStock || []).find(o => o.id === osId);
+            if (item) {
+                item.status = newStatus;
+                saveState();
+            }
+        }
+
+        function deleteOsItem(osId) {
+            if (confirm('Are you sure you want to delete this out-of-stock report?')) {
+                appState.outOfStock = (appState.outOfStock || []).filter(o => o.id !== osId);
+                saveState();
+            }
+        }
+
+        function closeEmployeeCycle(empId) {
+            const emp = (appState.employees || []).find(e => e.id === empId);
+            if (!emp) return;
+
+            const cycleName = prompt(`Enter Cycle Name / Range for ${emp.name} (e.g. Sat-Fri Oct 3-9):`, new Date().toLocaleDateString());
+            if (!cycleName) return;
+
+            const p = calculatePayrollForEmployee(empId);
+            if (p.totalHours === 0 && p.grossPay === 0) {
+                alert('No completed time logs found for this employee to close cycle.');
+                return;
+            }
+
+            if (confirm(`Close and archive cycle for ${emp.name}? This will log their payroll and reset active logs.`)) {
+                if (!appState.cycleHistory) appState.cycleHistory = [];
+
+                const record = {
+                    cycleName: cycleName,
+                    employeeId: emp.id,
+                    totalHours: p.totalHours,
+                    grossPay: p.grossPay,
+                    totalDeductions: p.totalDeductions,
+                    netPay: p.netPay,
+                    timestamp: new Date().toISOString()
+                };
+
+                appState.cycleHistory.push(record);
+                appState.logs = (appState.logs || []).filter(l => l.employeeId !== empId);
+                appState.deductions = (appState.deductions || []).filter(d => d.employeeId !== empId);
+                saveState();
+
+                alert(`Cycle closed and archived successfully for ${emp.name}.`);
+
+                const empEmail = emp.email || prompt('Enter employee email address:', '');
+                if (empEmail) {
+                    const subject = encodeURIComponent(`Bacting Pharmacy - Payslip Statement (${cycleName})`);
+                    const body = encodeURIComponent(
+                        `Hello ${emp.name},\n\n` +
+                        `Here is your official payroll statement for cycle: ${cycleName}\n\n` +
+                        `• Total Billable Hours: ${p.totalHours} hrs\n` +
+                        `• Gross Salary: ${formatPHP(p.grossPay)}\n` +
+                        `• Manual Deductions: -${formatPHP(p.totalDeductions)}\n` +
+                        `• Net Take-Home Pay: ${formatPHP(p.netPay)}\n\n` +
+                        `Thank you for your hard work and dedication at Bacting Pharmacy.`
+                    );
+                    window.location.href = `mailto:${empEmail}?subject=${subject}&body=${body}`;
+                }
+            }
+        }
+
+        function emailPayrollStatement(historyIndex) {
+            const record = (appState.cycleHistory || [])[historyIndex];
+            if (!record) return;
+
+            const emp = (appState.employees || []).find(e => e.id === record.employeeId);
+            const empName = emp ? emp.name : 'Employee';
+            const empEmail = emp && emp.email ? emp.email : prompt('Enter employee email address:', '');
+
+            if (!empEmail) return;
+
+            const subject = encodeURIComponent(`Bacting Pharmacy - Payslip Statement (${record.cycleName})`);
+            const body = encodeURIComponent(
+                `Hello ${empName},\n\n` +
+                `Here is your official payroll statement for record: ${record.cycleName}\n\n` +
+                `• Total Billable Hours: ${record.totalHours} hrs\n` +
+                `• Gross Salary: ${formatPHP(record.grossPay)}\n` +
+                `• Manual Deductions: -${formatPHP(record.totalDeductions)}\n` +
+                `• Net Take-Home Pay: ${formatPHP(record.netPay)}\n\n` +
+                `Thank you for your hard work and dedication at Bacting Pharmacy.`
+            );
+
+            window.location.href = `mailto:${empEmail}?subject=${subject}&body=${body}`;
+        }
+
+        let activeManagerChatEmpId = null;
+        function selectManagerChat(empId) {
+            activeManagerChatEmpId = empId;
+            let hasChanges = false;
+            (appState.messages || []).forEach(m => {
+                if (m.senderId === empId && m.receiverId === 'manager' && !m.read) {
+                    m.read = true;
+                    hasChanges = true;
+                }
+            });
+            if (hasChanges) {
+                saveState();
+            }
+            const chatWin = document.getElementById('manager-chat-window');
+            if (chatWin) {
+                const emp = (appState.employees || []).find(e => e.id === empId);
+                const msgs = (appState.messages || []).filter(m => (m.senderId === empId && m.receiverId === 'manager') || (m.senderId === 'manager' && m.receiverId === empId));
+                
+                let chatHtml = msgs.map(m => {
+                    const isManager = m.senderId === 'manager';
+                    const timeStr = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    return `
+                        <div class="w-full flex flex-col ${isManager ? 'items-end' : 'items-start'} mb-3">
+                            <div class="max-w-[75%] rounded-xl px-4 py-2.5 text-sm shadow-sm ${isManager ? 'bg-corporate-600 text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'}">
+                                <p class="font-semibold text-xs mb-0.5 opacity-75">${isManager ? 'Management' : emp.name}</p>
+                                <p>${m.text}</p>
+                            </div>
+                            <span class="text-[10px] text-slate-400 mt-1">${timeStr}</span>
+                        </div>
+                    `;
+                }).join('') || '<p class="text-center text-slate-400 text-sm py-4">No messages recorded.</p>';
+
+                chatWin.innerHTML = `
+                    <div class="w-full h-full flex flex-col justify-between">
+                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-2 mb-2 text-sm">Communication with ${emp.name}</div>
+                        <div class="flex-grow overflow-y-auto space-y-2 pr-2" id="manager-inner-chat-list">
+                            ${chatHtml}
+                        </div>
+                        <form onsubmit="sendManagerMessage(event, '${empId}')" class="flex gap-2 mt-2 pt-2 border-t border-slate-200">
+                            <input type="text" id="manager-chat-input" placeholder="Type reply..." class="flex-grow px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-corporate-500 bg-slate-50" required>
+                            <button type="submit" class="bg-corporate-600 hover:bg-corporate-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow">Send</button>
+                        </form>
+                    </div>
+                `;
+                const listEl = document.getElementById('manager-inner-chat-list');
+                if (listEl) listEl.scrollTop = listEl.scrollHeight;
+            }
+        }
+
+        function sendManagerMessage(e, empId) {
+            e.preventDefault();
+            const input = document.getElementById('manager-chat-input');
+            const text = input.value.trim();
+            if (text) {
+                if (!appState.messages) appState.messages = [];
+                appState.messages.push({
+                    id: 'msg-' + Date.now(),
+                    senderId: 'manager',
+                    receiverId: empId,
+                    text: text,
+                    timestamp: new Date().toISOString(),
+                    read: false
+                });
+                input.value = '';
+                saveState();
+                selectManagerChat(empId);
+            }
+        }
+
+        function handleAddNewEmployee(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-emp-name').value.trim();
+            const email = document.getElementById('new-emp-email').value.trim();
+            const pin = document.getElementById('new-emp-pin').value.trim();
+            const cycle = document.getElementById('new-emp-cycle').value;
+
+            if (name && email && pin.length === 4) {
+                if (!appState.employees) appState.employees = [];
+                appState.employees.push({
+                    id: 'emp-' + Date.now(),
+                    name: name,
+                    email: email,
+                    pin: pin,
+                    cycle: cycle
+                });
+                alert(`Employee ${name} added successfully.`);
+                saveState();
+            } else {
+                alert('Please ensure name, email are provided and PIN is exactly 4 digits.');
+            }
+        }
+
+        function deleteEmployee(empId) {
+            if (confirm('Are you sure you want to delete this employee?')) {
+                appState.employees = (appState.employees || []).filter(e => e.id !== empId);
+                appState.logs = (appState.logs || []).filter(l => l.employeeId !== empId);
+                appState.deductions = (appState.deductions || []).filter(d => d.employeeId !== empId);
+                saveState();
+            }
+        }
+
+        function handleManagerAddDeduction(e) {
+            e.preventDefault();
+            const employeeId = document.getElementById('ded-emp-id').value;
+            const amount = document.getElementById('ded-amount').value;
+            const note = document.getElementById('ded-note').value.trim();
+
+            if (employeeId && amount && note) {
+                if (!appState.deductions) appState.deductions = [];
+                appState.deductions.push({
+                    id: 'ded-' + Date.now(),
+                    employeeId: employeeId,
+                    amount: parseFloat(amount),
+                    note: note,
+                    date: new Date().toLocaleDateString()
+                });
+                alert('Deduction assigned successfully.');
+                saveState();
+            }
+        }
+
+        function handleManagerAddManualLog(e) {
+            e.preventDefault();
+            const employeeId = document.getElementById('manual-log-emp').value;
+            const clockInVal = document.getElementById('manual-log-in').value;
+            const clockOutVal = document.getElementById('manual-log-out').value;
+            const lunchVal = document.getElementById('manual-log-lunch').value === 'true';
+
+            if (employeeId && clockInVal && clockOutVal) {
+                if (!appState.logs) appState.logs = [];
+                appState.logs.push({
+                    id: 'log-' + Date.now(),
+                    employeeId: employeeId,
+                    clockIn: new Date(clockInVal).toISOString(),
+                    clockOut: new Date(clockOutVal).toISOString(),
+                    lunchTaken: lunchVal,
+                    otDeduction: 0,
+                    status: 'Completed'
+                });
+                alert('Manual time log added successfully.');
+                saveState();
+            }
+        }
+
+        function toggleManagerLunch(logId) {
+            const log = (appState.logs || []).find(l => l.id === logId);
+            if (log) {
+                log.lunchTaken = !log.lunchTaken;
+                alert(`Lunch status updated to: ${log.lunchTaken ? 'Taken (Yes)' : 'Not Taken (No, +₱50 added)'}`);
+                saveState();
+            }
+        }
+
+        function editManagerOT(logId) {
+            const log = (appState.logs || []).find(l => l.id === logId);
+            if (!log) return;
+
+            const newOt = prompt('Enter new OT deduction amount (₱):', log.otDeduction || 0);
+            if (newOt !== null && !isNaN(newOt)) {
+                log.otDeduction = parseFloat(newOt) || 0;
+                alert('OT deduction updated successfully.');
+                saveState();
+            }
+        }
+
+        function openEditLogModal(logId) {
+            const log = (appState.logs || []).find(l => l.id === logId);
+            if (!log) return;
+
+            document.getElementById('edit-log-id').value = log.id;
+            
+            if (log.clockIn) {
+                const inDate = new Date(log.clockIn);
+                document.getElementById('edit-clock-in').value = inDate.toISOString().slice(0, 16);
+            }
+            if (log.clockOut) {
+                const outDate = new Date(log.clockOut);
+                document.getElementById('edit-clock-out').value = outDate.toISOString().slice(0, 16);
+            } else {
+                document.getElementById('edit-clock-out').value = '';
+            }
+
+            document.getElementById('edit-log-modal').classList.remove('hidden');
+        }
+
+        function closeEditLogModal() {
+            document.getElementById('edit-log-modal').classList.add('hidden');
+        }
+
+        function submitEditLog(e) {
+            e.preventDefault();
+            const logId = document.getElementById('edit-log-id').value;
+            const inVal = document.getElementById('edit-clock-in').value;
+            const outVal = document.getElementById('edit-clock-out').value;
+
+            const log = (appState.logs || []).find(l => l.id === logId);
+            if (log && inVal) {
+                log.clockIn = new Date(inVal).toISOString();
+                log.clockOut = outVal ? new Date(outVal).toISOString() : null;
+                alert('Time log updated successfully.');
+                closeEditLogModal();
+                saveState();
+            }
+        }
+
+        function deleteLog(logId) {
+            if (confirm('Are you sure you want to delete this time log?')) {
+                appState.logs = (appState.logs || []).filter(l => l.id !== logId);
+                alert('Time log deleted successfully.');
+                saveState();
+            }
+        }
+
+        function editDeductionModal(dedId) {
+            const ded = (appState.deductions || []).find(d => d.id === dedId);
+            if (!ded) return;
+
+            const newNote = prompt('Edit Deduction Note / Description:', ded.note);
+            if (newNote !== null) {
+                const newAmount = prompt('Edit Deduction Amount (₱):', ded.amount);
+                if (newAmount !== null && !isNaN(newAmount)) {
+                    ded.note = newNote.trim();
+                    ded.amount = parseFloat(newAmount);
+                    alert('Deduction updated successfully.');
+                    saveState();
+                }
+            }
+        }
+
+        function deleteDeduction(dedId) {
+            if (confirm('Are you sure you want to delete this deduction?')) {
+                appState.deductions = (appState.deductions || []).filter(d => d.id !== dedId);
+                alert('Deduction deleted successfully.');
+                saveState();
+            }
+        }
+    </script>
+</body>
+</html>
